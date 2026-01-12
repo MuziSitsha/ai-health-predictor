@@ -1,0 +1,49 @@
+{
+  "best_model": "Random Forest (retrained)",
+  "best_model_path": "week2/models_retrained/random_forest.pkl",
+  "all_results": [
+    {
+      "Model": "Logistic Regression (retrained)",
+      "Accuracy": "0.7414",
+      "Precision": "0.7188",
+      "Recall": "0.5227",
+      "F1_Score": "0.6053",
+      "ROC_AUC": "0.8510"
+    },
+    {
+      "Model": "Random Forest (retrained)",
+      "Accuracy": "0.8534",
+      "Precision": "0.8140",
+      "Recall": "0.7955",
+      "F1_Score": "0.8046",
+      "ROC_AUC": "0.9138"
+    },
+    {
+      "Model": "Gradient Boosting (retrained)",
+      "Accuracy": "0.8448",
+      "Precision": "0.7826",
+      "Recall": "0.8182",
+      "F1_Score": "0.8000",
+      "ROC_AUC": "0.9347"
+    },
+    {
+      "Model": "SVM (retrained)",
+      "Accuracy": "0.7414",
+      "Precision": "0.7188",
+      "Recall": "0.5227",
+      "F1_Score": "0.6053",
+      "ROC_AUC": "0.8608"
+    },
+    {
+      "Model": "Deep Learning (corrected)",
+      "Accuracy": "0.7414",
+      "Precision": "0.6842",
+      "Recall": "0.5909",
+      "F1_Score": "0.6341",
+      "ROC_AUC": "0.8523"
+    }
+  ],
+  "selection_criteria": "Highest F1-Score",
+  "test_set_size": 116,
+  "test_positive_cases": 44
+}

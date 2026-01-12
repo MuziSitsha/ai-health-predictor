@@ -1,0 +1,6 @@
+sample_id,features,true_outcome,predicted_probability,predicted_outcome,correct
+107,"{'Pregnancies': 6.0, 'Glucose': 111.0, 'BloodPressure': 64.0, 'SkinThickness': 39.0, 'Insulin': 0.0, 'BMI': 34.2, 'DiabetesPedigreeFunction': 0.26, 'Age': 24.0}",0,0.17,0,True
+37,"{'Pregnancies': 5.0, 'Glucose': 121.0, 'BloodPressure': 72.0, 'SkinThickness': 23.0, 'Insulin': 112.0, 'BMI': 26.2, 'DiabetesPedigreeFunction': 0.245, 'Age': 30.0}",0,0.01,0,True
+90,"{'Pregnancies': 7.0, 'Glucose': 106.0, 'BloodPressure': 60.0, 'SkinThickness': 24.0, 'Insulin': 0.0, 'BMI': 26.5, 'DiabetesPedigreeFunction': 0.296, 'Age': 29.0}",1,0.09,0,False
+82,"{'Pregnancies': 0.0, 'Glucose': 146.0, 'BloodPressure': 82.0, 'SkinThickness': 27.0, 'Insulin': 0.0, 'BMI': 40.5, 'DiabetesPedigreeFunction': 1.781, 'Age': 44.0}",0,0.41,0,True
+33,"{'Pregnancies': 6.0, 'Glucose': 151.0, 'BloodPressure': 62.0, 'SkinThickness': 31.0, 'Insulin': 120.0, 'BMI': 35.5, 'DiabetesPedigreeFunction': 0.692, 'Age': 28.0}",0,0.24,0,True
