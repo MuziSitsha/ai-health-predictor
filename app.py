@@ -280,142 +280,67 @@ else:
         st.sidebar.header("Patient Clinical Parameters")
     
     st.sidebar.subheader("Clinical Measurements")
-    
+
+    # Add CSS for button styling and hide slider value labels
+    st.markdown("""
+    <style>
+    .stSidebar [data-testid="baseButton-secondary"] {
+        font-size: 14px !important;
+        padding: 4px 8px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 38px !important;
+        font-weight: bold;
+    }
+    [data-testid="stSlider"] [role="slider"] + * {
+        display: none !important;
+    }
+    .stSlider [role="slider"] ~ span {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     # Pregnancies
     st.sidebar.write("**Pregnancies**")
-    col1, col2, col3, col4 = st.sidebar.columns([0.6, 0.6, 2.8, 0.8])
-    with col1:
-        if st.button("−", key="pregnancies_minus", use_container_width=True):
-            st.session_state.pregnancies = max(0, st.session_state.pregnancies - 1)
-            st.rerun()
-    with col2:
-        if st.button("✚", key="pregnancies_plus", use_container_width=True):
-            st.session_state.pregnancies = min(20, st.session_state.pregnancies + 1)
-            st.rerun()
-    with col3:
-        val = st.slider("##Pregnancies", 0, 20, st.session_state.pregnancies, key="pregnancies_slider", label_visibility="collapsed")
-        st.session_state.pregnancies = val
-    with col4:
-        st.write(f"<span style='color: black;'><small>{st.session_state.pregnancies}</small></span>", unsafe_allow_html=True)
+    val = st.sidebar.slider("##Pregnancies", 0, 20, st.session_state.pregnancies, key="pregnancies_slider", label_visibility="collapsed")
+    st.session_state.pregnancies = val
 
     # Glucose
     st.sidebar.write("**Glucose (mg/dL)**")
-    col1, col2, col3, col4 = st.sidebar.columns([0.6, 0.6, 2.8, 0.8])
-    with col1:
-        if st.button("−", key="glucose_minus", use_container_width=True):
-            st.session_state.glucose = max(0, st.session_state.glucose - 1)
-            st.rerun()
-    with col2:
-        if st.button("✚", key="glucose_plus", use_container_width=True):
-            st.session_state.glucose = min(200, st.session_state.glucose + 1)
-            st.rerun()
-    with col3:
-        val = st.slider("##Glucose", 0, 200, st.session_state.glucose, key="glucose_slider", label_visibility="collapsed")
-        st.session_state.glucose = val
-    with col4:
-        st.write(f"<span style='color: black;'><small>{st.session_state.glucose}</small></span>", unsafe_allow_html=True)
+    val = st.sidebar.slider("##Glucose", 0, 200, st.session_state.glucose, key="glucose_slider", label_visibility="collapsed")
+    st.session_state.glucose = val
 
     # Blood Pressure
     st.sidebar.write("**Blood Pressure (mm Hg)**")
-    col1, col2, col3, col4 = st.sidebar.columns([0.6, 0.6, 2.8, 0.8])
-    with col1:
-        if st.button("−", key="blood_pressure_minus", use_container_width=True):
-            st.session_state.blood_pressure = max(0, st.session_state.blood_pressure - 1)
-            st.rerun()
-    with col2:
-        if st.button("✚", key="blood_pressure_plus", use_container_width=True):
-            st.session_state.blood_pressure = min(122, st.session_state.blood_pressure + 1)
-            st.rerun()
-    with col3:
-        val = st.slider("##Blood Pressure", 0, 122, st.session_state.blood_pressure, key="blood_pressure_slider", label_visibility="collapsed")
-        st.session_state.blood_pressure = val
-    with col4:
-        st.write(f"<span style='color: black;'><small>{st.session_state.blood_pressure}</small></span>", unsafe_allow_html=True)
+    val = st.sidebar.slider("##Blood Pressure", 0, 122, st.session_state.blood_pressure, key="blood_pressure_slider", label_visibility="collapsed")
+    st.session_state.blood_pressure = val
 
     # Skin Thickness
     st.sidebar.write("**Skin Thickness (mm)**")
-    col1, col2, col3, col4 = st.sidebar.columns([0.6, 0.6, 2.8, 0.8])
-    with col1:
-        if st.button("−", key="skin_thickness_minus", use_container_width=True):
-            st.session_state.skin_thickness = max(0, st.session_state.skin_thickness - 1)
-            st.rerun()
-    with col2:
-        if st.button("✚", key="skin_thickness_plus", use_container_width=True):
-            st.session_state.skin_thickness = min(99, st.session_state.skin_thickness + 1)
-            st.rerun()
-    with col3:
-        val = st.slider("##Skin Thickness", 0, 99, st.session_state.skin_thickness, key="skin_thickness_slider", label_visibility="collapsed")
-        st.session_state.skin_thickness = val
-    with col4:
-        st.write(f"<span style='color: black;'><small>{st.session_state.skin_thickness}</small></span>", unsafe_allow_html=True)
+    val = st.sidebar.slider("##Skin Thickness", 0, 99, st.session_state.skin_thickness, key="skin_thickness_slider", label_visibility="collapsed")
+    st.session_state.skin_thickness = val
 
     # Insulin
     st.sidebar.write("**Insulin (mu U/ml)**")
-    col1, col2, col3, col4 = st.sidebar.columns([0.6, 0.6, 2.8, 0.8])
-    with col1:
-        if st.button("−", key="insulin_minus", use_container_width=True):
-            st.session_state.insulin = max(0, st.session_state.insulin - 1)
-            st.rerun()
-    with col2:
-        if st.button("✚", key="insulin_plus", use_container_width=True):
-            st.session_state.insulin = min(846, st.session_state.insulin + 1)
-            st.rerun()
-    with col3:
-        val = st.slider("##Insulin", 0, 846, st.session_state.insulin, key="insulin_slider", label_visibility="collapsed")
-        st.session_state.insulin = val
-    with col4:
-        st.write(f"<span style='color: black;'><small>{st.session_state.insulin}</small></span>", unsafe_allow_html=True)
+    val = st.sidebar.slider("##Insulin", 0, 846, st.session_state.insulin, key="insulin_slider", label_visibility="collapsed")
+    st.session_state.insulin = val
 
     # BMI
-    st.sidebar.write("**BMI (kg/m²)**")
-    col1, col2, col3, col4 = st.sidebar.columns([0.6, 0.6, 2.8, 0.8])
-    with col1:
-        if st.button("−", key="bmi_minus", use_container_width=True):
-            st.session_state.bmi = max(0.0, st.session_state.bmi - 0.1)
-            st.rerun()
-    with col2:
-        if st.button("✚", key="bmi_plus", use_container_width=True):
-            st.session_state.bmi = min(67.1, st.session_state.bmi + 0.1)
-            st.rerun()
-    with col3:
-        val = st.slider("##BMI", 0.0, 67.1, st.session_state.bmi, 0.1, key="bmi_slider", label_visibility="collapsed")
-        st.session_state.bmi = val
-    with col4:
-        st.write(f"<span style='color: black;'><small>{st.session_state.bmi:.1f}</small></span>", unsafe_allow_html=True)
+    st.sidebar.write("**BMI (kg/m2)**")
+    val = st.sidebar.slider("##BMI", 0.0, 67.1, st.session_state.bmi, 0.1, key="bmi_slider", label_visibility="collapsed")
+    st.session_state.bmi = val
 
     # DPF
     st.sidebar.write("**Diabetes Pedigree Function**")
-    col1, col2, col3, col4 = st.sidebar.columns([0.6, 0.6, 2.8, 0.8])
-    with col1:
-        if st.button("−", key="dpf_minus", use_container_width=True):
-            st.session_state.dpf = max(0.0, st.session_state.dpf - 0.01)
-            st.rerun()
-    with col2:
-        if st.button("✚", key="dpf_plus", use_container_width=True):
-            st.session_state.dpf = min(2.5, st.session_state.dpf + 0.01)
-            st.rerun()
-    with col3:
-        val = st.slider("##DPF", 0.0, 2.5, st.session_state.dpf, 0.01, key="dpf_slider", label_visibility="collapsed")
-        st.session_state.dpf = val
-    with col4:
-        st.write(f"<span style='color: black;'><small>{st.session_state.dpf:.2f}</small></span>", unsafe_allow_html=True)
+    val = st.sidebar.slider("##DPF", 0.0, 2.5, st.session_state.dpf, 0.01, key="dpf_slider", label_visibility="collapsed")
+    st.session_state.dpf = val
 
     # Age
     st.sidebar.write("**Age (years)**")
-    col1, col2, col3, col4 = st.sidebar.columns([0.6, 0.6, 2.8, 0.8])
-    with col1:
-        if st.button("−", key="age_minus", use_container_width=True):
-            st.session_state.age = max(21, st.session_state.age - 1)
-            st.rerun()
-    with col2:
-        if st.button("✚", key="age_plus", use_container_width=True):
-            st.session_state.age = min(81, st.session_state.age + 1)
-            st.rerun()
-    with col3:
-        val = st.slider("##Age", 21, 81, st.session_state.age, key="age_slider", label_visibility="collapsed")
-        st.session_state.age = val
-    with col4:
-        st.write(f"<span style='color: black;'><small>{st.session_state.age}</small></span>", unsafe_allow_html=True)
+    val = st.sidebar.slider("##Age", 21, 81, st.session_state.age, key="age_slider", label_visibility="collapsed")
+    st.session_state.age = val
 
     # Main prediction button
     predict_button = st.sidebar.button("Predict Diabetes Risk", type="primary", use_container_width=True)
