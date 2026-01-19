@@ -1,4 +1,4 @@
 streamlit==1.29.0
 pandas==2.2.1
 numpy==1.26.4
-# Updated: Mon, Jan 19, 2026  7:12:58 PM
+--only-binary :all:
