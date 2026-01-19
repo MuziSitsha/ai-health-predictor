@@ -269,39 +269,10 @@ st.markdown('<p class="sub-header">Predict diabetes risk using machine learning 
 @st.cache_resource
 def load_model():
     try:
-        # Try multiple paths for model
-        model = None
-        model_paths = ["week2/models_retrained/random_forest.pkl", "./week2/models_retrained/random_forest.pkl", "random_forest.pkl", "./random_forest.pkl"]
-        for path in model_paths:
-            try:
-                import os
-                if os.path.exists(path):
-                    model = joblib.load(path)
-                    break
-            except:
-                continue
-        # Try multiple paths for scaler
-        scaler = None
-        scaler_paths = ["week2/models_retrained/scaler_retrained.pkl", "./week2/models_retrained/scaler_retrained.pkl", "scaler_retrained.pkl", "./scaler_retrained.pkl"]
-        for path in scaler_paths:
-            try:
-                import os
-                if os.path.exists(path):
-                    scaler = joblib.load(path)
-                    break
-            except:
-                continue
-        # Define feature names (from Pima Indians Diabetes Dataset)
-        feature_names = [
-            "Pregnancies", 
-            "Glucose", 
-            "BloodPressure", 
-            "SkinThickness", 
-            "Insulin", 
-            "BMI", 
-            "DiabetesPedigreeFunction", 
-            "Age"
-        ]
+        model = joblib.load("week2/models_retrained/random_forest.pkl")
+        scaler = joblib.load("week2/models_retrained/scaler_retrained.pkl")
+        train_df = pd.read_csv("data/processed/train.csv")
+        feature_names = [col for col in train_df.columns if col != 'Outcome']
         return model, scaler, feature_names
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")

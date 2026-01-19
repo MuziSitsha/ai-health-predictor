@@ -19,13 +19,11 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# Virtual Environments
+# Virtual Environment
 venv/
 env/
 ENV/
-.env/
 
 # IDE
 .vscode/
@@ -33,21 +31,24 @@ ENV/
 *.swp
 *.swo
 
-# Jupyter Notebook
-.ipynb_checkpoints/
-
-# Data files (large files)
-data/*.csv
-data/processed/*.pkl
-*.pkl
-*.h5
-*.hdf5
-*.model
-*.joblib
-
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
 
 # Streamlit
 .streamlit/
+
+# Exceptions - allow .pkl files for models
+!*.pkl
+!week2/models_retrained/*.pkl
+
+# Allow the train.csv
+!data/processed/train.csv
