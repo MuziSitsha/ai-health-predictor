@@ -50,35 +50,55 @@ if 'dpf' not in st.session_state:
 if 'age' not in st.session_state:
     st.session_state.age = 33
 
-# Custom CSS
+
+
+# Custom CSS - Base styles for both modes
 st.markdown("""
 <style>
-    .main-header { font-size: 2.5rem; color: #1E3A8A; text-align: center; margin-bottom: 1rem; }
-    .sub-header { font-size: 1.2rem; color: #4B5563; text-align: center; margin-bottom: 2rem; }
+    /* These utility classes work in both light and dark mode */
+    .main-header { font-size: 2.5rem; text-align: center; margin-bottom: 1rem; }
+    .sub-header { font-size: 1.2rem; text-align: center; margin-bottom: 2rem; }
     .risk-high {
-        background-color: #FEE2E2;
         padding: 20px;
         border-radius: 10px;
         border-left: 5px solid #DC2626;
         box-shadow: 0 4px 6px rgba(220, 38, 38, 0.1);
     }
     .risk-medium {
-        background-color: #FEF3C7;
         padding: 20px;
         border-radius: 10px;
         border-left: 5px solid #D97706;
         box-shadow: 0 4px 6px rgba(217, 119, 6, 0.1);
     }
     .risk-low {
-        background-color: #D1FAE5;
         padding: 20px;
-        border-radius: 10px; 
+        border-radius: 10px;
         border-left: 5px solid #059669;
         box-shadow: 0 4px 6px rgba(5, 150, 105, 0.1);
     }
-    .metric-card { background-color: #F8FAFC; padding: 20px; border-radius: 10px; border: 1px solid #E2E8F0; text-align: center; }
+    
     .what-if-btn { margin: 5px; width: 100%; }
-</style>
+    .metric-card { 
+        padding: 20px; 
+        border-radius: 10px; 
+        text-align: center; 
+    }
+    
+    /* Light mode specific colors - will be overridden by dark mode */
+    .stApp[data-theme="light"] .sub-header { color: #4B5563; }
+    .stApp[data-theme="light"] .risk-high {
+        background-color: #FEE2E2;
+        color: #1e3a8a;
+    }
+    .stApp[data-theme="light"] .risk-medium {
+        background-color: #FEF3C7;
+        color: #1e3a8a;
+    }
+    .stApp[data-theme="light"] .risk-low {
+        background-color: #D1FAE5;
+        color: #1e3a8a;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
 # Apply dark/light mode theme
@@ -126,7 +146,7 @@ if st.session_state.theme_mode == 'dark':
             border-left: 5px solid #66bb6a !important;
             box-shadow: 0 4px 6px rgba(102, 187, 106, 0.3) !important;
         }
-        .metric-card {
+        .metric-card { 
             background-color: #2a2a2a !important;
             color: #e0e0e0 !important;
             border: 1px solid #424242 !important;
@@ -148,41 +168,95 @@ if st.session_state.theme_mode == 'dark':
 else:
     st.markdown("""
     <style>
-        .stApp {
-            background-color: #ffffff;
-            color: #1a1a1a;
+        /* ==== LIGHT MODE ==== */
+        .stApp[data-theme="light"] {
+            background-color: #f5f7fa !important;
         }
-        h1, h2, h3, h4, h5, h6 {
+        
+        /* Sidebar and Header - Grey */
+        .stApp[data-theme="light"] section[data-testid="stSidebar"] {
+            background-color: #f8fafc !important;
+            border-right: 1px solid #e2e8f0 !important;
+        }
+        
+        .stApp[data-theme="light"] header {
+            background-color: #f1f5f9 !important;
+        }
+        
+        /* Text - Blue */
+        .stApp[data-theme="light"] h1,
+        .stApp[data-theme="light"] h2,
+        .stApp[data-theme="light"] h3,
+        .stApp[data-theme="light"] h4,
+        .stApp[data-theme="light"] h5,
+        .stApp[data-theme="light"] h6,
+        .stApp[data-theme="light"] p,
+        .stApp[data-theme="light"] div,
+        .stApp[data-theme="light"] span,
+        .stApp[data-theme="light"] label {
+            color: #1e3a8a !important;
+        }
+        
+        /* Cards and Borders - White with Grey borders */
+        .stApp[data-theme="light"] div[data-testid="column"],
+        .stApp[data-theme="light"] div[data-testid="stVerticalBlock"] > div,
+        .stApp[data-theme="light"] .element-container {
+            background-color: white !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px;
+        }
+        
+        /* Tables */
+        .stApp[data-theme="light"] table {
+            border: 1px solid #e2e8f0 !important;
+            background-color: white !important;
+        }
+        
+        .stApp[data-theme="light"] th {
+            background-color: #f1f5f9 !important;
+            color: #1e40af !important;
+        }
+        
+        .stApp[data-theme="light"] td {
+            color: #1e3a8a !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        
+        /* Charts */
+        .stApp[data-theme="light"] [data-testid="stPlotlyChart"] {
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px;
+            background-color: white !important;
+        }
+        
+        /* Utility classes for light mode */
+        .stApp[data-theme="light"] .main-header {
             color: #1E3A8A !important;
         }
-        .main-header {
-            color: #1E3A8A !important;
-        }
-        .sub-header {
+        
+        .stApp[data-theme="light"] .sub-header {
             color: #4B5563 !important;
         }
-        .risk-high {
+        
+        .stApp[data-theme="light"] .risk-high {
             background-color: #FEE2E2 !important;
-            color: #7f1d1d !important;
-            border-left: 5px solid #DC2626 !important;
-            box-shadow: 0 4px 6px rgba(220, 38, 38, 0.15) !important;
+            color: #1e3a8a !important;
         }
-        .risk-medium {
+        
+        .stApp[data-theme="light"] .risk-medium {
             background-color: #FEF3C7 !important;
-            color: #78350f !important;
-            border-left: 5px solid #D97706 !important;
-            box-shadow: 0 4px 6px rgba(217, 119, 6, 0.15) !important;
+            color: #1e3a8a !important;
         }
-        .risk-low {
+        
+        .stApp[data-theme="light"] .risk-low {
             background-color: #D1FAE5 !important;
-            color: #065f46 !important;
-            border-left: 5px solid #059669 !important;
-            box-shadow: 0 4px 6px rgba(5, 150, 105, 0.15) !important;
+            color: #1e3a8a !important;
         }
-        .metric-card {
-            background-color: #F8FAFC !important;
-            color: #1a1a1a !important;
-            border: 1px solid #E2E8F0 !important;
+        
+        .stApp[data-theme="light"] .metric-card {
+            background-color: white !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #1e3a8a !important;
         }
     </style>
     """, unsafe_allow_html=True)
