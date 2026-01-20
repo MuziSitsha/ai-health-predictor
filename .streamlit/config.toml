@@ -2,11 +2,10 @@
 maxUploadSize = 200
 enableXsrfProtection = false
 enableCORS = false
-maxMessageSize = 200
 
 [browser]
 gatherUsageStats = false
 
-# Increase timeouts
-[server]
-maxUploadSize = 500
+# Try to disable uv
+[global]
+developmentMode = false
