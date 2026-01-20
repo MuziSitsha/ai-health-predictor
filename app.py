@@ -5,7 +5,6 @@ import joblib
 import plotly.graph_objects as go
 import plotly.express as px
 import os
-import sys
 
 # Set page config
 st.set_page_config(
@@ -14,10 +13,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Check if models directory exists
-MODELS_DIR = 'models'
-os.makedirs(MODELS_DIR, exist_ok=True)
 
 # Initialize session state
 if 'current_page' not in st.session_state:
@@ -39,7 +34,7 @@ for key, value in defaults.items():
 
 # Title
 st.title("AI Health Predictor - Diabetes Risk Assessment")
-st.markdown("Predict diabetes risk using multiple machine learning models")
+st.markdown("Predict diabetes risk using machine learning models")
 
 # Sidebar
 with st.sidebar:
@@ -50,7 +45,11 @@ with st.sidebar:
     model_options = ['Random Forest']
     
     # Check which models are available
+    MODELS_DIR = 'models'
+    os.makedirs(MODELS_DIR, exist_ok=True)
+    
     nn_model_path = os.path.join(MODELS_DIR, 'neural_network_model.pkl')
+    
     if os.path.exists(nn_model_path):
         model_options.append('Neural Network')
     else:
@@ -88,6 +87,8 @@ with st.sidebar:
 def load_model(model_name):
     """Load model with fallback to demo mode"""
     try:
+        MODELS_DIR = 'models'
+        
         if model_name == 'Random Forest':
             model_path = os.path.join(MODELS_DIR, 'random_forest.pkl')
             scaler_path = os.path.join(MODELS_DIR, 'scaler_retrained.pkl')
@@ -96,8 +97,6 @@ def load_model(model_name):
                 model = joblib.load(model_path)
                 scaler = joblib.load(scaler_path)
                 return model, scaler
-            else:
-                return None, None
                 
         else:  # Neural Network
             model_path = os.path.join(MODELS_DIR, 'neural_network_model.pkl')
@@ -107,12 +106,12 @@ def load_model(model_name):
                 model = joblib.load(model_path)
                 scaler = joblib.load(scaler_path)
                 return model, scaler
-            else:
-                return None, None
                 
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")
         return None, None
+    
+    return None, None
 
 # Page routing
 if st.session_state.current_page == 'home':
@@ -157,6 +156,7 @@ if st.session_state.current_page == 'home':
     cols = st.columns(3)
     
     with cols[0]:
+        MODELS_DIR = 'models'
         rf_path = os.path.join(MODELS_DIR, 'random_forest.pkl')
         if os.path.exists(rf_path):
             st.metric("Random Forest", "Available", "Baseline Model")
@@ -205,7 +205,7 @@ elif st.session_state.current_page == 'prediction':
         st.session_state.prediction_made = True
         
         # Try to load real model first
-        model, scaler = load_model(selected_model)
+        model, scaler = load_model(st.session_state.selected_model)
         
         if model is not None and scaler is not None:
             try:
@@ -343,7 +343,6 @@ else:  # info page
     
     **Deployment:**
     - Platform: Streamlit Community Cloud
-    - URL: https://ai-health-predictor-kaknzejwgvtneyqpxzsm5b.streamlit.app/
     
     **GitHub:** https://github.com/MuziSitsha/ai-health-predictor
     
