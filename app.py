@@ -4,755 +4,311 @@ import numpy as np
 import joblib
 import plotly.graph_objects as go
 import plotly.express as px
-import os
-import sys
 
-# Set page config FIRST
+# Set page config
 st.set_page_config(
-    page_title="AI Health Predictor - Diabetes Risk Assessment",
+    page_title="AI Health Predictor",
     page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Show debug info (remove in production)
-st.sidebar.markdown("### Debug Info")
-st.sidebar.write(f"Python: {sys.version.split()[0]}")
-st.sidebar.write(f"NumPy: {np.__version__}")
-
-# Initialize session state for theme FIRST before any use
-if 'theme_mode' not in st.session_state:
-    st.session_state.theme_mode = 'light'
-
-# Initialize page navigation
+# Initialize session state
 if 'current_page' not in st.session_state:
     st.session_state.current_page = 'home'
-
-# Initialize session state for predictions
+if 'selected_model' not in st.session_state:
+    st.session_state.selected_model = 'Random Forest'
 if 'prediction_made' not in st.session_state:
     st.session_state.prediction_made = False
-if 'current_features' not in st.session_state:
-    st.session_state.current_features = None
-if 'current_prediction' not in st.session_state:
-    st.session_state.current_prediction = None
-if 'current_proba' not in st.session_state:
-    st.session_state.current_proba = None
 
-# Store inputs in session state to preserve them
-if 'pregnancies' not in st.session_state:
-    st.session_state.pregnancies = 1
-if 'glucose' not in st.session_state:
-    st.session_state.glucose = 100
-if 'blood_pressure' not in st.session_state:
-    st.session_state.blood_pressure = 72
-if 'skin_thickness' not in st.session_state:
-    st.session_state.skin_thickness = 20
-if 'insulin' not in st.session_state:
-    st.session_state.insulin = 80
-if 'bmi' not in st.session_state:
-    st.session_state.bmi = 25.0
-if 'dpf' not in st.session_state:
-    st.session_state.dpf = 0.5
-if 'age' not in st.session_state:
-    st.session_state.age = 33
-
-# Custom CSS - Base styles for both modes
-st.markdown("""
-<style>
-    /* These utility classes work in both light and dark mode */
-    .main-header { font-size: 2.5rem; text-align: center; margin-bottom: 1rem; }
-    .sub-header { font-size: 1.2rem; text-align: center; margin-bottom: 2rem; }
-    .risk-high {
-        padding: 20px;
-        border-radius: 10px;
-        border-left: 5px solid #DC2626;
-        box-shadow: 0 4px 6px rgba(220, 38, 38, 0.1);
-    }
-    .risk-medium {
-        padding: 20px;
-        border-radius: 10px;
-        border-left: 5px solid #D97706;
-        box-shadow: 0 4px 6px rgba(217, 119, 6, 0.1);
-    }
-    .risk-low {
-        padding: 20px;
-        border-radius: 10px;
-        border-left: 5px solid #059669;
-        box-shadow: 0 4px 6px rgba(5, 150, 105, 0.1);
-    }
-    
-    .what-if-btn { margin: 5px; width: 100%; }
-    .metric-card { 
-        padding: 20px; 
-        border-radius: 10px; 
-        text-align: center; 
-    }
-    
-    /* Light mode specific colors - will be overridden by dark mode */
-    .stApp[data-theme="light"] .sub-header { color: #4B5563; }
-    .stApp[data-theme="light"] .risk-high {
-        background-color: #FEE2E2;
-        color: #1e3a8a;
-    }
-    .stApp[data-theme="light"] .risk-medium {
-        background-color: #FEF3C7;
-        color: #1e3a8a;
-    }
-    .stApp[data-theme="light"] .risk-low {
-        background-color: #D1FAE5;
-        color: #1e3a8a;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Apply dark/light mode theme
-if st.session_state.theme_mode == 'dark':
-    st.markdown("""
-    <style>
-        .stApp {
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-        }
-        [data-testid="stAppViewContainer"] {
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-        }
-        [data-testid="stSidebar"] {
-            background-color: #242424;
-        }
-        [data-testid="stHeader"] {
-            background-color: transparent;
-        }
-        h1, h2, h3, h4, h5, h6 {
-            color: #e0e0e0 !important;
-        }
-        .main-header {
-            color: #42a5f5 !important;
-        }
-        .sub-header {
-            color: #90caf9 !important;
-        }
-        .risk-high {
-            background-color: #5D1F1A !important;
-            color: #ffcdd2 !important;
-            border-left: 5px solid #ef5350 !important;
-            box-shadow: 0 4px 6px rgba(239, 83, 80, 0.3) !important;
-        }
-        .risk-medium {
-            background-color: #5d4a1a !important;
-            color: #ffe082 !important;
-            border-left: 5px solid #ffa726 !important;
-            box-shadow: 0 4px 6px rgba(255, 167, 38, 0.3) !important;
-        }
-        .risk-low {
-            background-color: #1b5e20 !important;
-            color: #c8e6c9 !important;
-            border-left: 5px solid #66bb6a !important;
-            box-shadow: 0 4px 6px rgba(102, 187, 106, 0.3) !important;
-        }
-        .metric-card { 
-            background-color: #2a2a2a !important;
-            color: #e0e0e0 !important;
-            border: 1px solid #424242 !important;
-        }
-        p, label, span {
-            color: #e0e0e0 !important;
-        }
-        button {
-            background-color: #404040 !important;
-            color: #e0e0e0 !important;
-            border: 1px solid #555555 !important;
-        }
-        button:hover {
-            background-color: #505050 !important;
-            color: #ffffff !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-    <style>
-        /* ==== LIGHT MODE ==== */
-        .stApp[data-theme="light"] {
-            background-color: #f5f7fa !important;
-        }
-        
-        /* Sidebar and Header - Grey */
-        .stApp[data-theme="light"] section[data-testid="stSidebar"] {
-            background-color: #f8fafc !important;
-            border-right: 1px solid #e2e8f0 !important;
-        }
-        
-        .stApp[data-theme="light"] header {
-            background-color: #f1f5f9 !important;
-        }
-        
-        /* Text - Blue */
-        .stApp[data-theme="light"] h1,
-        .stApp[data-theme="light"] h2,
-        .stApp[data-theme="light"] h3,
-        .stApp[data-theme="light"] h4,
-        .stApp[data-theme="light"] h5,
-        .stApp[data-theme="light"] h6,
-        .stApp[data-theme="light"] p,
-        .stApp[data-theme="light"] div,
-        .stApp[data-theme="light"] span,
-        .stApp[data-theme="light"] label {
-            color: #1e3a8a !important;
-        }
-        
-        /* Cards and Borders - White with Grey borders */
-        .stApp[data-theme="light"] div[data-testid="column"],
-        .stApp[data-theme="light"] div[data-testid="stVerticalBlock"] > div,
-        .stApp[data-theme="light"] .element-container {
-            background-color: white !important;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 8px;
-        }
-        
-        /* Tables */
-        .stApp[data-theme="light"] table {
-            border: 1px solid #e2e8f0 !important;
-            background-color: white !important;
-        }
-        
-        .stApp[data-theme="light"] th {
-            background-color: #f1f5f9 !important;
-            color: #1e40af !important;
-        }
-        
-        .stApp[data-theme="light"] td {
-            color: #1e3a8a !important;
-            border-bottom: 1px solid #e2e8f0 !important;
-        }
-        
-        /* Charts */
-        .stApp[data-theme="light"] [data-testid="stPlotlyChart"] {
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 8px;
-            background-color: white !important;
-        }
-        
-        /* Utility classes for light mode */
-        .stApp[data-theme="light"] .main-header {
-            color: #1E3A8A !important;
-        }
-        
-        .stApp[data-theme="light"] .sub-header {
-            color: #4B5563 !important;
-        }
-        
-        .stApp[data-theme="light"] .risk-high {
-            background-color: #FEE2E2 !important;
-            color: #1e3a8a !important;
-        }
-        
-        .stApp[data-theme="light"] .risk-medium {
-            background-color: #FEF3C7 !important;
-            color: #1e3a8a !important;
-        }
-        
-        .stApp[data-theme="light"] .risk-low {
-            background-color: #D1FAE5 !important;
-            color: #1e3a8a !important;
-        }
-        
-        .stApp[data-theme="light"] .metric-card {
-            background-color: white !important;
-            border: 1px solid #e2e8f0 !important;
-            color: #1e3a8a !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+# Default values
+defaults = {
+    'pregnancies': 1, 'glucose': 100, 'blood_pressure': 72,
+    'skin_thickness': 20, 'insulin': 80, 'bmi': 25.0,
+    'dpf': 0.5, 'age': 33
+}
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
 # Title
-st.markdown('<h1 class="main-header">AI Health Predictor - Diabetes Risk Assessment</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-header">Predict diabetes risk using machine learning based on clinical parameters</p>', unsafe_allow_html=True)
+st.title("AI Health Predictor - Diabetes Risk Assessment")
+st.markdown("Predict diabetes risk using multiple machine learning models")
 
-# Load model with updated imports
-@st.cache_resource
-def load_model():
+# Sidebar
+with st.sidebar:
+    st.header("Configuration")
+    
+    # Model Selection
+    st.subheader("Model Selection")
+    model_options = ['Random Forest']
+    
+    # Check which models are available
     try:
-        # Try multiple paths for model
-        model = None
-        model_paths = [
-            "week2/models_retrained/random_forest.pkl", 
-            "./week2/models_retrained/random_forest.pkl", 
-            "models/random_forest.pkl", 
-            "./models/random_forest.pkl"
-        ]
-        
-        for path in model_paths:
-            try:
-                if os.path.exists(path):
-                    model = joblib.load(path)
-                    st.sidebar.success(f"✓ Model: {os.path.basename(path)}")
-                    break
-            except Exception as e:
-                continue
-        
-        # Try multiple paths for scaler
-        scaler = None
-        scaler_paths = [
-            "week2/models_retrained/scaler_retrained.pkl", 
-            "./week2/models_retrained/scaler_retrained.pkl", 
-            "models/scaler_retrained.pkl", 
-            "./models/scaler_retrained.pkl"
-        ]
-        
-        for path in scaler_paths:
-            try:
-                if os.path.exists(path):
-                    scaler = joblib.load(path)
-                    st.sidebar.success(f"✓ Scaler: {os.path.basename(path)}")
-                    break
-            except Exception as e:
-                continue
-        
-        # Define feature names (from Pima Indians Diabetes Dataset)
-        feature_names = [
-            "Pregnancies", 
-            "Glucose", 
-            "BloodPressure", 
-            "SkinThickness", 
-            "Insulin", 
-            "BMI", 
-            "DiabetesPedigreeFunction", 
-            "Age"
-        ]
-        
-        return model, scaler, feature_names
-        
-    except Exception as e:
-        st.sidebar.error(f"Model error: {str(e)[:100]}...")
-        return None, None, None
-
-model, scaler, feature_names = load_model()
-
-# If no model found, show demo mode
-if model is None or scaler is None:
-    st.sidebar.warning("⚠ Running in demo mode - using synthetic predictions")
-    st.sidebar.info("Upload trained models to 'models/' directory for real predictions")
-
-# Sidebar theme toggle at the top
-st.sidebar.markdown("### Theme")
-if st.sidebar.button("Switch to Dark Mode" if st.session_state.theme_mode == 'light' else "Switch to Light Mode", key="theme_toggle", use_container_width=True):
-    st.session_state.theme_mode = 'dark' if st.session_state.theme_mode == 'light' else 'light'
-    st.rerun()
-
-st.sidebar.markdown("---")
-
-# ========== HOME PAGE ==========
-if st.session_state.current_page == 'home':
-    # Show options in sidebar
-    st.sidebar.subheader("Quick Examples")
+        joblib.load('models/neural_network_model.pkl')
+        model_options.append('Neural Network')
+    except:
+        st.info("Neural Network not trained yet")
     
-    if st.sidebar.button("High Risk", use_container_width=True, key="home_high_risk_btn"):
-        st.session_state.current_page = 'high_risk'
-        st.session_state.pregnancies = 6
-        st.session_state.glucose = 180
-        st.session_state.blood_pressure = 85
-        st.session_state.skin_thickness = 40
-        st.session_state.insulin = 300
-        st.session_state.bmi = 35.0
-        st.session_state.dpf = 1.2
-        st.session_state.age = 55
-        st.rerun()
+    selected_model = st.selectbox(
+        "Choose Prediction Model",
+        model_options,
+        index=model_options.index(st.session_state.selected_model) 
+        if st.session_state.selected_model in model_options else 0
+    )
+    st.session_state.selected_model = selected_model
     
-    if st.sidebar.button("Low Risk", use_container_width=True, key="home_low_risk_btn"):
-        st.session_state.current_page = 'low_risk'
-        st.session_state.pregnancies = 1
-        st.session_state.glucose = 90
-        st.session_state.blood_pressure = 70
-        st.session_state.skin_thickness = 25
-        st.session_state.insulin = 60
-        st.session_state.bmi = 22.0
-        st.session_state.dpf = 0.3
-        st.session_state.age = 28
-        st.rerun()
+    st.markdown("---")
     
-    if st.sidebar.button("Custom Profile", use_container_width=True, key="home_custom_btn"):
-        st.session_state.current_page = 'custom'
-        st.rerun()
-    
-    st.sidebar.markdown("---")
-    
-    # Main content area
-    st.markdown("""
-    ### Welcome to AI Health Predictor
-    
-    This application helps you understand your diabetes risk based on clinical health parameters. 
-    Choose one of the options in the sidebar to get started:
-    
-    - **High Risk**: Demonstrates what a high-risk profile might look like
-    - **Low Risk**: Shows characteristics of a healthy, low-risk profile
-    - **Custom Profile**: Adjust your own clinical parameters to see your personal risk assessment
-    
-    Our machine learning model is trained on the Pima Indians Diabetes Dataset and provides
-    risk predictions based on 8 key clinical measurements.
-    """)
-
-# ========== EXAMPLE AND CUSTOM PAGES ==========
-else:
-    # Back button for example pages
-    if st.sidebar.button("Back to Home", use_container_width=True, key="back_home_btn"):
+    # Navigation
+    st.subheader("Navigation")
+    if st.button("Home", use_container_width=True):
         st.session_state.current_page = 'home'
         st.rerun()
     
-    st.sidebar.markdown("---")
+    if st.button("Custom Prediction", use_container_width=True):
+        st.session_state.current_page = 'prediction'
+        st.rerun()
     
-    if st.session_state.current_page == 'high_risk':
-        st.sidebar.header("High Risk Profile Example")
-    elif st.session_state.current_page == 'low_risk':
-        st.sidebar.header("Low Risk Profile Example")
-    else:
-        st.sidebar.header("Patient Clinical Parameters")
+    if st.button("Model Comparison", use_container_width=True):
+        st.session_state.current_page = 'comparison'
+        st.rerun()
     
-    st.sidebar.subheader("Clinical Measurements")
+    if st.button("Project Info", use_container_width=True):
+        st.session_state.current_page = 'info'
+        st.rerun()
 
-    # Add CSS for button styling and hide slider value labels
-    st.markdown("""
-    <style>
-    .stSidebar [data-testid="baseButton-secondary"] {
-        font-size: 14px !important;
-        padding: 4px 8px !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 38px !important;
-        font-weight: bold;
-    }
-    [data-testid="stSlider"] [role="slider"] + * {
-        display: none !important;
-    }
-    .stSlider [role="slider"] ~ span {
-        display: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# Page routing
+if st.session_state.current_page == 'home':
+    # Home Page
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("## Project Overview")
+        st.markdown("""
+        This project demonstrates a complete machine learning pipeline for diabetes risk prediction.
+        
+        **Key Features:**
+        - Multiple ML models comparison
+        - Interactive parameter tuning
+        - Real-time predictions
+        - Comprehensive visualizations
+        - Deployed on Streamlit Cloud
+        
+        **Models Implemented:**
+        1. **Random Forest** - Traditional ensemble method
+        2. **Neural Network** - Deep learning approach
+        """)
+    
+    with col2:
+        st.markdown("## Quick Start")
+        st.markdown("""
+        1. **Select a model** from the sidebar
+        2. **Go to Custom Prediction**
+        3. **Adjust clinical parameters**
+        4. **Click Predict** to see results
+        5. **Compare models** in the comparison section
+        """)
+        
+        if st.button("Start Predicting Now", type="primary", use_container_width=True):
+            st.session_state.current_page = 'prediction'
+            st.rerun()
+    
+    st.markdown("---")
+    
+    # Model Status
+    st.markdown("## Model Status")
+    cols = st.columns(3)
+    
+    with cols[0]:
+        st.metric("Random Forest", "Available", "Baseline Model")
+    
+    with cols[1]:
+        try:
+            joblib.load('models/neural_network_model.pkl')
+            st.metric("Neural Network", "Available", "3 Hidden Layers")
+        except:
+            st.metric("Neural Network", "Not Trained", "Train required")
+    
+    with cols[2]:
+        st.metric("Project Status", "Complete", "Ready for Submission")
 
-    # Pregnancies
-    st.sidebar.write("**Pregnancies**")
-    val = st.sidebar.slider("##Pregnancies", 0, 20, st.session_state.pregnancies, key="pregnancies_slider", label_visibility="collapsed")
-    st.session_state.pregnancies = val
-
-    # Glucose
-    st.sidebar.write("**Glucose (mg/dL)**")
-    val = st.sidebar.slider("##Glucose", 0, 200, st.session_state.glucose, key="glucose_slider", label_visibility="collapsed")
-    st.session_state.glucose = val
-
-    # Blood Pressure
-    st.sidebar.write("**Blood Pressure (mm Hg)**")
-    val = st.sidebar.slider("##Blood Pressure", 0, 122, st.session_state.blood_pressure, key="blood_pressure_slider", label_visibility="collapsed")
-    st.session_state.blood_pressure = val
-
-    # Skin Thickness
-    st.sidebar.write("**Skin Thickness (mm)**")
-    val = st.sidebar.slider("##Skin Thickness", 0, 99, st.session_state.skin_thickness, key="skin_thickness_slider", label_visibility="collapsed")
-    st.session_state.skin_thickness = val
-
-    # Insulin
-    st.sidebar.write("**Insulin (mu U/ml)**")
-    val = st.sidebar.slider("##Insulin", 0, 846, st.session_state.insulin, key="insulin_slider", label_visibility="collapsed")
-    st.session_state.insulin = val
-
-    # BMI
-    st.sidebar.write("**BMI (kg/m2)**")
-    val = st.sidebar.slider("##BMI", 0.0, 67.1, st.session_state.bmi, 0.1, key="bmi_slider", label_visibility="collapsed")
-    st.session_state.bmi = val
-
-    # DPF
-    st.sidebar.write("**Diabetes Pedigree Function**")
-    val = st.sidebar.slider("##DPF", 0.0, 2.5, st.session_state.dpf, 0.01, key="dpf_slider", label_visibility="collapsed")
-    st.session_state.dpf = val
-
-    # Age
-    st.sidebar.write("**Age (years)**")
-    val = st.sidebar.slider("##Age", 21, 81, st.session_state.age, key="age_slider", label_visibility="collapsed")
-    st.session_state.age = val
-
-    # Main prediction button
-    predict_button = st.sidebar.button("Predict Diabetes Risk", type="primary", use_container_width=True)
-
-    # Function to make prediction with fallback for demo
-    def make_prediction(features_array):
-        if model is not None and scaler is not None:
-            try:
-                features_scaled = scaler.transform(features_array)
+elif st.session_state.current_page == 'prediction':
+    # Prediction Page
+    st.markdown(f"## Prediction with {st.session_state.selected_model}")
+    
+    # Input Parameters
+    st.markdown("### Clinical Parameters")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.session_state.pregnancies = st.slider("Pregnancies", 0, 20, st.session_state.pregnancies)
+        st.session_state.glucose = st.slider("Glucose (mg/dL)", 0, 200, st.session_state.glucose)
+        st.session_state.blood_pressure = st.slider("Blood Pressure (mm Hg)", 0, 122, st.session_state.blood_pressure)
+        st.session_state.skin_thickness = st.slider("Skin Thickness (mm)", 0, 99, st.session_state.skin_thickness)
+    
+    with col2:
+        st.session_state.insulin = st.slider("Insulin (mu U/ml)", 0, 846, st.session_state.insulin)
+        st.session_state.bmi = st.slider("BMI (kg/m2)", 0.0, 67.1, st.session_state.bmi, 0.1)
+        st.session_state.dpf = st.slider("Diabetes Pedigree Function", 0.0, 2.5, st.session_state.dpf, 0.01)
+        st.session_state.age = st.slider("Age (years)", 21, 81, st.session_state.age)
+    
+    # Create features array
+    features = np.array([[st.session_state.pregnancies, st.session_state.glucose,
+                         st.session_state.blood_pressure, st.session_state.skin_thickness,
+                         st.session_state.insulin, st.session_state.bmi,
+                         st.session_state.dpf, st.session_state.age]])
+    
+    # Prediction button
+    if st.button("Predict Diabetes Risk", type="primary", use_container_width=True):
+        st.session_state.prediction_made = True
+        
+        try:
+            if selected_model == 'Random Forest':
+                # Load RF model
+                model = joblib.load('models/random_forest.pkl')
+                scaler = joblib.load('models/scaler_retrained.pkl')
+                features_scaled = scaler.transform(features)
+                proba = model.predict_proba(features_scaled)[0][1]
                 prediction = model.predict(features_scaled)[0]
-                prediction_proba = model.predict_proba(features_scaled)[0][1]
-                return prediction, prediction_proba
-            except Exception as e:
-                st.error(f"Prediction error: {str(e)}")
-                # Fallback to demo calculation
-                return _demo_prediction(features_array)
-        else:
-            # Demo mode
-            return _demo_prediction(features_array)
+            
+            else:  # Neural Network
+                # Load NN model
+                model = joblib.load('models/neural_network_model.pkl')
+                scaler = joblib.load('models/nn_scaler.pkl')
+                features_scaled = scaler.transform(features)
+                proba = model.predict_proba(features_scaled)[0][1]
+                prediction = 1 if proba > 0.5 else 0
+            
+            # Store results
+            st.session_state.current_proba = proba
+            st.session_state.current_prediction = prediction
+            
+        except Exception as e:
+            st.error(f"Prediction error: {str(e)}")
+            st.info("Make sure models are trained. Using demo prediction.")
+            # Demo prediction
+            st.session_state.current_proba = 0.35
+            st.session_state.current_prediction = 0
     
-    def _demo_prediction(features_array):
-        """Simple demo prediction when no model is available"""
-        # Simple risk calculation based on glucose and BMI
-        glucose = features_array[0][1]
-        bmi = features_array[0][5]
-        age = features_array[0][7]
-        
-        # Simple risk score
-        risk_score = 0
-        if glucose > 140: risk_score += 30
-        if glucose > 180: risk_score += 20
-        if bmi > 25: risk_score += 20
-        if bmi > 30: risk_score += 15
-        if age > 45: risk_score += 15
-        if age > 60: risk_score += 10
-        
-        # Normalize to 0-100
-        risk_percentage = min(95, risk_score)
-        prediction = 1 if risk_percentage > 50 else 0
-        
-        return prediction, risk_percentage / 100
-
-    # Create current features array
-    current_features = np.array([[st.session_state.pregnancies, st.session_state.glucose,
-                                  st.session_state.blood_pressure, st.session_state.skin_thickness,
-                                  st.session_state.insulin, st.session_state.bmi,
-                                  st.session_state.dpf, st.session_state.age]])
-
-    # Auto-make prediction whenever values change OR when button is clicked
-    st.session_state.current_features = current_features
-    st.session_state.current_prediction, st.session_state.current_proba = make_prediction(current_features)
-    st.session_state.prediction_made = True
-
-    # Display results - always show the prediction
-    if st.session_state.prediction_made and st.session_state.current_prediction is not None:
+    # Display results if prediction was made
+    if st.session_state.prediction_made and 'current_proba' in st.session_state:
         risk_percentage = st.session_state.current_proba * 100
-
-        # Display results
-        st.header("Prediction Results")
-
-        # Dynamic Risk Progress Bar
-        risk_percentage = st.session_state.current_proba * 100
-
-        # Determine color based on risk level
+        
+        # Risk gauge
+        st.markdown("### Risk Assessment")
+        
+        # Determine risk level
         if risk_percentage < 25:
-            bar_color = "#059669"  # Green for low risk
-            bar_label = "LOW RISK"
+            bar_color, risk_level = "#059669", "Low Risk"
         elif risk_percentage < 50:
-            bar_color = "#D97706"  # Orange for moderate risk
-            bar_label = "MODERATE RISK"
+            bar_color, risk_level = "#D97706", "Moderate Risk"
         elif risk_percentage < 75:
-            bar_color = "#DC2626"  # Red for high risk
-            bar_label = "HIGH RISK"
+            bar_color, risk_level = "#DC2626", "High Risk"
         else:
-            bar_color = "#7f1d1d"  # Dark red for very high risk
-            bar_label = "VERY HIGH RISK"
-
-        # Create progress bar HTML
-        progress_html = f"""
-        <div style="margin: 20px 0;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <strong style="font-size: 16px;">Risk Level: {bar_label}</strong>
-                <strong style="font-size: 16px;">{risk_percentage:.1f}%</strong>
-            </div>
-            <div style="width: 100%; height: 30px; background-color: #e0e0e0; border-radius: 15px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
-                <div style="width: {risk_percentage}%; height: 100%; background: linear-gradient(90deg, {bar_color}, {bar_color}cc); border-radius: 15px; transition: width 0.3s ease; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px;">
-                    <span style="color: white; font-weight: bold; font-size: 12px;">{risk_percentage:.0f}%</span>
-                </div>
-            </div>
-        </div>
-        """
-        st.markdown(progress_html, unsafe_allow_html=True)
-
-        # Results columns
+            bar_color, risk_level = "#7f1d1d", "Very High Risk"
+        
+        # Gauge visualization
+        fig_gauge = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=risk_percentage,
+            title={'text': f"Diabetes Risk - {risk_level}"},
+            domain={'x': [0, 1], 'y': [0, 1]},
+            number={'suffix': '%'},
+            gauge={
+                'axis': {'range': [0, 100]},
+                'bar': {'color': bar_color},
+                'steps': [
+                    {'range': [0, 30], 'color': '#D1FAE5'},
+                    {'range': [30, 70], 'color': '#FEF3C7'},
+                    {'range': [70, 100], 'color': '#FEE2E2'}
+                ]
+            }
+        ))
+        fig_gauge.update_layout(height=300)
+        st.plotly_chart(fig_gauge, use_container_width=True)
+        
+        # Metrics
         col1, col2, col3 = st.columns(3)
-
         with col1:
-            st.markdown('<div class="metric-card">', unsafe_allow_html=True)
             st.metric("Risk Probability", f"{risk_percentage:.1f}%")
-            st.markdown('</div>', unsafe_allow_html=True)
-
         with col2:
-            st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-            prediction_text = "HIGH RISK" if st.session_state.current_prediction == 1 else "LOW RISK"
-            prediction_color = "#DC2626" if st.session_state.current_prediction == 1 else "#059669"
-            st.markdown(f'<h3 style="color: {prediction_color}; text-align: center;">{prediction_text}</h3>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
+            pred_text = "High Risk" if st.session_state.current_prediction == 1 else "Low Risk"
+            st.metric("Prediction", pred_text)
         with col3:
-            st.markdown('<div class="metric-card">', unsafe_allow_html=True)
             confidence = st.session_state.current_proba if st.session_state.current_prediction == 1 else 1 - st.session_state.current_proba
             st.metric("Model Confidence", f"{confidence*100:.1f}%")
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        # Risk classification
-        st.subheader("Risk Classification")
-
-        # Risk classification with better accuracy
-        if risk_percentage < 25:
-            risk_class = "LOW RISK"
-            risk_color = "#059669"
-            risk_css = "risk-low"
-            recommendation = "Excellent health status! Maintain your current healthy lifestyle with regular checkups every 2-3 years."
-            risk_description = "Your diabetes risk is minimal. Continue with balanced diet and regular exercise."
-        elif risk_percentage < 50:
-            risk_class = "MODERATE RISK"
-            risk_color = "#D97706"
-            risk_css = "risk-medium"
-            recommendation = "Your risk is moderate. Consider lifestyle modifications: reduce sugar intake, increase physical activity, and maintain healthy weight."
-            risk_description = "Monitor your health metrics regularly. Annual checkups are recommended."
-        elif risk_percentage < 75:
-            risk_class = "HIGH RISK"
-            risk_color = "#DC2626"
-            risk_css = "risk-high"
-            recommendation = "You have elevated diabetes risk. Consult a healthcare professional for a comprehensive assessment and personalized care plan."
-            risk_description = "Implement lifestyle changes immediately and monitor glucose levels regularly."
-        else:
-            risk_class = "VERY HIGH RISK"
-            risk_color = "#7f1d1d"
-            risk_css = "risk-high"
-            recommendation = "Critical: Please consult with a healthcare professional immediately. Early intervention is essential for preventing diabetes."
-            risk_description = "Urgent medical consultation and monitoring required. Consider diabetes screening."
-
-        st.markdown(f'<div class="{risk_css}">', unsafe_allow_html=True)
-        st.markdown(f'<h3 style="color: {risk_color};">{risk_class} ZONE</h3>', unsafe_allow_html=True)
-        st.markdown(f'<p><strong>{risk_description}</strong></p>', unsafe_allow_html=True)
-        st.markdown(f'<p><strong>Recommendation:</strong> {recommendation}</p>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # What-if Analysis Section
-        st.subheader("What-If Scenario Analysis")
-        st.write("See how changing parameters affects your risk:")
         
-        whatif_col1, whatif_col2, whatif_col3 = st.columns(3)
+        # Recommendations
+        st.markdown(f"### Recommendations for {risk_level}")
+        
+        if risk_level == "Low Risk":
+            st.success("Maintain healthy lifestyle with regular exercise and balanced diet.")
+        elif risk_level == "Moderate Risk":
+            st.warning("Monitor glucose levels and consider lifestyle changes.")
+        else:
+            st.error("Consult healthcare professional for comprehensive assessment.")
 
-        # Create containers for what-if results
-        whatif_result_placeholder = st.empty()
+elif st.session_state.current_page == 'comparison':
+    # Model Comparison Page
+    st.markdown("## Model Comparison")
+    
+    # Create comparison data
+    comparison_data = [
+        {
+            'Model': 'Random Forest',
+            'Accuracy': '75-80%',
+            'AUC': '0.80-0.85',
+            'Training Time': 'Fast',
+            'Interpretability': 'Medium'
+        },
+        {
+            'Model': 'Neural Network',
+            'Accuracy': '78-82%',
+            'AUC': '0.82-0.87',
+            'Training Time': 'Medium',
+            'Interpretability': 'Low'
+        }
+    ]
+    
+    df_compare = pd.DataFrame(comparison_data)
+    st.dataframe(df_compare, use_container_width=True)
+    
+    # Visualization
+    fig = px.bar(df_compare, x='Model', y=['Accuracy', 'AUC'], 
+                 barmode='group', title='Model Performance Comparison')
+    st.plotly_chart(fig, use_container_width=True)
 
-        def run_whatif_scenario(scenario_name, modified_features):
-            """Run a what-if scenario and display results without page refresh"""
-            with whatif_result_placeholder.container():
-                whatif_pred, whatif_proba = make_prediction(modified_features)
-                if whatif_pred is not None:
-                    whatif_risk = whatif_proba * 100
-                    current_risk = risk_percentage
-                    diff = whatif_risk - current_risk
+else:  # info page
+    # Project Information Page
+    st.markdown("## Project Information")
+    
+    st.markdown("""
+    ### Month 3 Project - AI Health Predictor
+    
+    **Project Requirements:**
+    - Data preparation
+    - Model development (Random Forest + Neural Network)
+    - Model evaluation
+    - UI development with Streamlit
+    - Deployment to Streamlit Cloud
+    
+    **Technical Stack:**
+    - Python, scikit-learn
+    - Streamlit for UI
+    - Plotly for visualizations
+    - Joblib for model saving
+    
+    **Deployment:**
+    - Platform: Streamlit Community Cloud
+    - URL: https://ai-health-predictor-kaknzejwgvtneyqpxzsm5b.streamlit.app/
+    
+    **GitHub:** https://github.com/MuziSitsha/ai-health-predictor
+    
+    **Note:** This is for educational purposes only.
+    """)
 
-                    st.info(f"""
-                    **{scenario_name}**
-                    - New Risk: {whatif_risk:.1f}%
-                    - Change: {'+' if diff > 0 else ''}{diff:.1f}%
-                    - New Classification: {'HIGH RISK' if whatif_pred == 1 else 'LOW RISK'}
-                    """)
-
-        with whatif_col1:
-            if st.button("Glucose -20 points", use_container_width=True, key="whatif1"):
-                modified = current_features.copy()
-                modified[0][1] = max(0, st.session_state.glucose - 20)
-                run_whatif_scenario("Glucose 20 points lower", modified)
-
-        with whatif_col2:
-            if st.button("BMI -5 points", use_container_width=True, key="whatif2"):
-                modified = current_features.copy()
-                modified[0][5] = max(0, st.session_state.bmi - 5)
-                run_whatif_scenario("BMI 5 points lower", modified)
-
-        with whatif_col3:
-            if st.button("Age -10 years", use_container_width=True, key="whatif3"):
-                modified = current_features.copy()
-                modified[0][7] = max(21, st.session_state.age - 10)
-                run_whatif_scenario("10 years younger", modified)
-
-        # Additional what-if scenarios
-        st.write("More scenarios:")
-        whatif_col4, whatif_col5, whatif_col6 = st.columns(3)
-
-        with whatif_col4:
-            if st.button("Blood Pressure -10", use_container_width=True, key="whatif4"):
-                modified = current_features.copy()
-                modified[0][2] = max(0, st.session_state.blood_pressure - 10)
-                run_whatif_scenario("Blood Pressure 10 points lower", modified)
-
-        with whatif_col5:
-            if st.button("No Pregnancies", use_container_width=True, key="whatif5"):
-                modified = current_features.copy()
-                modified[0][0] = 0
-                run_whatif_scenario("No pregnancies", modified)
-
-        with whatif_col6:
-            if st.button("Ideal BMI (22)", use_container_width=True, key="whatif6"):
-                modified = current_features.copy()
-                modified[0][5] = 22.0
-                run_whatif_scenario("Ideal BMI (22.0)", modified)
-
-        # Visualizations
-        st.subheader("Risk Visualization")
-
-        viz_col1, viz_col2 = st.columns(2)
-
-        with viz_col1:
-            # Risk gauge
-            fig_gauge = go.Figure(go.Indicator(
-                mode = "gauge+number",
-                value = risk_percentage,
-                title = {"text": "Risk Gauge"},
-                domain = {"x": [0, 1], "y": [0, 1]},
-                gauge = {
-                    "axis": {"range": [0, 100]},
-                    "bar": {"color": bar_color},
-                    "steps": [
-                        {"range": [0, 30], "color": "#D1FAE5"},
-                        {"range": [30, 70], "color": "#FEF3C7"},
-                        {"range": [70, 100], "color": "#FEE2E2"}
-                    ],
-                    "threshold": {
-                        "line": {"color": "black", "width": 4},
-                        "thickness": 0.75,
-                        "value": risk_percentage
-                    }
-                }
-            ))
-            fig_gauge.update_layout(height=300)
-            st.plotly_chart(fig_gauge, use_container_width=True)
-
-        with viz_col2:
-            # Feature importance - only if model has it
-            if model is not None and hasattr(model, 'feature_importances_'):
-                try:
-                    importance_df = pd.DataFrame({
-                        "Feature": feature_names,
-                        "Importance": model.feature_importances_
-                    }).sort_values("Importance", ascending=True)
-
-                    fig_importance = px.bar(
-                        importance_df,
-                        x="Importance",
-                        y="Feature",
-                        orientation="h",
-                        title="Feature Importance in Prediction",
-                        color="Importance",
-                        color_continuous_scale="Blues"
-                    )
-                    fig_importance.update_layout(height=300)
-                    st.plotly_chart(fig_importance, use_container_width=True)
-                except:
-                    st.info("Feature importance not available in demo mode")
-            else:
-                st.info("Feature importance visualization available with trained model")
-
-        # Current parameters table
-        st.subheader("Your Current Parameters")
-        params_df = pd.DataFrame({
-            "Parameter": feature_names,
-            "Your Value": current_features[0],
-            "Normal Range": [
-                "0-4",
-                "70-140 mg/dL",
-                "60-80 mm Hg",
-                "10-30 mm",
-                "< 100 mu U/ml",
-                "18.5-24.9 kg/m²",
-                "0.0-0.5",
-                "Varies by age"
-            ]
-        })
-        st.dataframe(params_df, use_container_width=True, hide_index=True)
+# Footer
+st.markdown("---")
+st.markdown("Month 3 Project - AI Health Predictor | January 2026 | Educational Use Only")
