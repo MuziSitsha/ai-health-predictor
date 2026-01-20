@@ -223,7 +223,7 @@ st.set_page_config(
 
 # Initialize session state for theme FIRST before any use
 if 'theme_mode' not in st.session_state:
-    st.session_state.theme_mode = 'light'
+    st.session_state.theme_mode = 'light'  # Start with light mode
 
 # Initialize page navigation
 if 'current_page' not in st.session_state:
@@ -263,6 +263,7 @@ if 'selected_model' not in st.session_state:
 
 # ===== CUSTOM CSS FOR THEMES =====
 
+# Base styles (common to both themes)
 st.markdown("""
 <style>
     /* Base styles for both themes */
@@ -309,26 +310,90 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Apply dark/light mode theme
+# Apply light mode theme by default - WHITE BACKGROUND
+st.markdown("""
+<style>
+    /* Light theme styles - WHITE BACKGROUND */
+    .stApp {
+        background-color: white !important;
+    }
+    [data-testid="stAppViewContainer"] {
+        background-color: white !important;
+        color: #31333F !important;
+    }
+    [data-testid="stSidebar"] {
+        background-color: #F0F2F6 !important;
+    }
+    h1, h2, h3, h4, h5, h6, p, div, span, label {
+        color: #31333F !important;
+    }
+    .stNumberInput input, .stSlider div {
+        background-color: white !important;
+        color: #31333F !important;
+        border: 1px solid #E5E7EB !important;
+    }
+    .stButton > button {
+        background-color: #FF4B4B !important;
+        color: white !important;
+        border: none !important;
+    }
+    .stButton > button:hover {
+        background-color: #FF3333 !important;
+    }
+    .stSelectbox div, .stTextInput input {
+        background-color: white !important;
+        color: #31333F !important;
+        border: 1px solid #E5E7EB !important;
+    }
+    .stMetric {
+        background-color: white !important;
+        color: #31333F !important;
+    }
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
+        color: #31333F !important;
+    }
+    .stDataFrame {
+        background-color: white !important;
+        color: #31333F !important;
+    }
+    .stDataFrame table {
+        background-color: white !important;
+        color: #31333F !important;
+    }
+    .stDataFrame th, .stDataFrame td {
+        background-color: white !important;
+        color: #31333F !important;
+        border-color: #E5E7EB !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Apply dark mode theme only if explicitly selected
 if st.session_state.theme_mode == 'dark':
     st.markdown("""
     <style>
-        /* Dark theme specific styles */
+        /* Dark theme specific styles - FIXED: Top bar is now dark */
         .stApp {
-            background-color: #1a1a1a;
-            color: #e0e0e0;
+            background-color: #1a1a1a !important;
+            color: #e0e0e0 !important;
         }
         [data-testid="stAppViewContainer"] {
-            background-color: #1a1a1a;
-            color: #e0e0e0;
+            background-color: #1a1a1a !important;
+            color: #e0e0e0 !important;
         }
         [data-testid="stSidebar"] {
-            background-color: #242424;
+            background-color: #242424 !important;
         }
         [data-testid="stHeader"] {
-            background-color: transparent;
+            background-color: #1a1a1a !important;
         }
-        h1, h2, h3, h4, h5, h6 {
+        header[data-testid="stHeader"] {
+            background-color: #1a1a1a !important;
+        }
+        .st-emotion-cache-1avcm0n {
+            background-color: #1a1a1a !important;
+        }
+        h1, h2, h3, h4, h5, h6, p, div, span, label {
             color: #e0e0e0 !important;
         }
         .stNumberInput input, .stSlider div {
@@ -340,9 +405,6 @@ if st.session_state.theme_mode == 'dark':
             background-color: #FF4B4B !important;
             color: white !important;
             border: none !important;
-        }
-        .stButton > button:hover {
-            background-color: #FF3333 !important;
         }
         .stSelectbox div, .stTextInput input {
             background-color: #2a2a2a !important;
@@ -374,6 +436,19 @@ if st.session_state.theme_mode == 'dark':
             background-color: #2a2a2a !important;
             color: #e0e0e0 !important;
             border: 1px solid #444444 !important;
+        }
+        .stDataFrame {
+            background-color: #2a2a2a !important;
+            color: #e0e0e0 !important;
+        }
+        .stDataFrame table {
+            background-color: #2a2a2a !important;
+            color: #e0e0e0 !important;
+        }
+        .stDataFrame th, .stDataFrame td {
+            background-color: #2a2a2a !important;
+            color: #e0e0e0 !important;
+            border-color: #444444 !important;
         }
     </style>
     """, unsafe_allow_html=True)

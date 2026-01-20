@@ -1,4 +1,3 @@
-# Python
 __pycache__/
 *.pyc
 *.pyo
@@ -6,23 +5,12 @@ __pycache__/
 .Python
 env/
 venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Models (if they're large)
-models/*.pkl
-!models/README.md
-
-# Streamlit
-.streamlit/
-
-# OS
+.venv/
+*.ipynb
+.ipynb_checkpoints/
+*.pkl
+*.joblib
+*.h5
+*.model
 .DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+*.log
