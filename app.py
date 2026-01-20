@@ -3,8 +3,13 @@ import pandas as pd
 import numpy as np
 import joblib
 import plotly.graph_objects as go
-from sklearn.preprocessing import StandardScaler
 import plotly.express as px
+import os
+import sys
+
+# Check versions
+st.write(f"Python version: {sys.version}")
+st.write(f"NumPy version: {np.__version__}")
 
 # Set page config
 st.set_page_config(
@@ -49,8 +54,6 @@ if 'dpf' not in st.session_state:
     st.session_state.dpf = 0.5
 if 'age' not in st.session_state:
     st.session_state.age = 33
-
-
 
 # Custom CSS - Base styles for both modes
 st.markdown("""
@@ -271,23 +274,23 @@ def load_model():
     try:
         # Try multiple paths for model
         model = None
-        model_paths = ["week2/models_retrained/random_forest.pkl", "./week2/models_retrained/random_forest.pkl", "random_forest.pkl", "./random_forest.pkl"]
+        model_paths = ["week2/models_retrained/random_forest.pkl", "./week2/models_retrained/random_forest.pkl", "models/random_forest.pkl", "./models/random_forest.pkl"]
         for path in model_paths:
             try:
-                import os
                 if os.path.exists(path):
                     model = joblib.load(path)
+                    st.success(f"Loaded model from: {path}")
                     break
             except:
                 continue
         # Try multiple paths for scaler
         scaler = None
-        scaler_paths = ["week2/models_retrained/scaler_retrained.pkl", "./week2/models_retrained/scaler_retrained.pkl", "scaler_retrained.pkl", "./scaler_retrained.pkl"]
+        scaler_paths = ["week2/models_retrained/scaler_retrained.pkl", "./week2/models_retrained/scaler_retrained.pkl", "models/scaler_retrained.pkl", "./models/scaler_retrained.pkl"]
         for path in scaler_paths:
             try:
-                import os
                 if os.path.exists(path):
                     scaler = joblib.load(path)
+                    st.success(f"Loaded scaler from: {path}")
                     break
             except:
                 continue
@@ -310,6 +313,7 @@ def load_model():
 model, scaler, feature_names = load_model()
 
 # Sidebar theme toggle at the top
+st.sidebar.markdown("### Theme")
 if st.sidebar.button("Switch to Dark Mode" if st.session_state.theme_mode == 'light' else "Switch to Light Mode", key="theme_toggle", use_container_width=True):
     st.session_state.theme_mode = 'dark' if st.session_state.theme_mode == 'light' else 'light'
     st.rerun()
