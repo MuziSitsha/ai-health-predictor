@@ -1,4 +1,0 @@
-# System dependencies (if needed)
-build-essential
-python3-dev
-libgomp1
