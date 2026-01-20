@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import joblib
 import plotly.graph_objects as go
-from sklearn.preprocessing import StandardScaler
 import plotly.express as px
+import os
 
 # Set page config
 st.set_page_config(
@@ -267,28 +267,45 @@ st.markdown('<p class="sub-header">Predict diabetes risk using machine learning 
 @st.cache_resource
 def load_model():
     try:
+        # Create models directory if it doesn't exist
+        os.makedirs("models", exist_ok=True)
+        
         # Try multiple paths for model
         model = None
-        model_paths = ["models/random_forest.pkl", "./models/random_forest.pkl", "random_forest.pkl", "./random_forest.pkl"]
+        model_paths = [
+            "models/random_forest.pkl", 
+            "./models/random_forest.pkl", 
+            "week2/models_retrained/random_forest.pkl",
+            "./week2/models_retrained/random_forest.pkl"
+        ]
+        
         for path in model_paths:
             try:
-                import os
                 if os.path.exists(path):
                     model = joblib.load(path)
+                    st.success(f"Loaded model from: {path}")
                     break
-            except:
+            except Exception as e:
                 continue
+        
         # Try multiple paths for scaler
         scaler = None
-        scaler_paths = ["models/scaler_retrained.pkl", "./models/scaler_retrained.pkl", "scaler_retrained.pkl", "./scaler_retrained.pkl"]
+        scaler_paths = [
+            "models/scaler_retrained.pkl", 
+            "./models/scaler_retrained.pkl", 
+            "week2/models_retrained/scaler_retrained.pkl",
+            "./week2/models_retrained/scaler_retrained.pkl"
+        ]
+        
         for path in scaler_paths:
             try:
-                import os
                 if os.path.exists(path):
                     scaler = joblib.load(path)
+                    st.success(f"Loaded scaler from: {path}")
                     break
-            except:
+            except Exception as e:
                 continue
+        
         # Define feature names (from Pima Indians Diabetes Dataset)
         feature_names = [
             "Pregnancies", 
@@ -300,10 +317,51 @@ def load_model():
             "DiabetesPedigreeFunction", 
             "Age"
         ]
+        
+        # If no model found, create a demo model
+        if model is None or scaler is None:
+            st.warning("No trained model found. Using demo mode for predictions.")
+            # Create a simple demo model
+            from sklearn.ensemble import RandomForestClassifier
+            from sklearn.preprocessing import StandardScaler
+            
+            # Create dummy data for demo
+            np.random.seed(42)
+            X_demo = np.random.randn(100, 8)
+            y_demo = np.random.randint(0, 2, 100)
+            
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X_demo)
+            
+            model = RandomForestClassifier(n_estimators=10, random_state=42)
+            model.fit(X_scaled, y_demo)
+            
+            st.info("Running in demo mode with synthetic data. Train your model for real predictions.")
+        
         return model, scaler, feature_names
+        
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")
-        return None, None, None
+        # Return demo model even if there's an error
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.preprocessing import StandardScaler
+        
+        np.random.seed(42)
+        X_demo = np.random.randn(100, 8)
+        y_demo = np.random.randint(0, 2, 100)
+        
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X_demo)
+        
+        model = RandomForestClassifier(n_estimators=10, random_state=42)
+        model.fit(X_scaled, y_demo)
+        
+        feature_names = [
+            "Pregnancies", "Glucose", "BloodPressure", "SkinThickness", 
+            "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"
+        ]
+        
+        return model, scaler, feature_names
 
 model, scaler, feature_names = load_model()
 
@@ -457,8 +515,14 @@ else:
                 return prediction, prediction_proba
             except Exception as e:
                 st.error(f"Prediction error: {str(e)}")
-                return None, None
-        return None, None
+                # Return demo prediction
+                demo_proba = 0.3 + (features_array[0][1] / 200 * 0.4)  # Glucose affects demo risk
+                demo_pred = 1 if demo_proba > 0.5 else 0
+                return demo_pred, demo_proba
+        # Return demo prediction if no model
+        demo_proba = 0.3 + (features_array[0][1] / 200 * 0.4)
+        demo_pred = 1 if demo_proba > 0.5 else 0
+        return demo_pred, demo_proba
 
     # Create current features array
     current_features = np.array([[st.session_state.pregnancies, st.session_state.glucose,
