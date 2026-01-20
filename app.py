@@ -4,6 +4,8 @@ import numpy as np
 import joblib
 import plotly.graph_objects as go
 import plotly.express as px
+import os
+import sys
 
 # Set page config
 st.set_page_config(
@@ -12,6 +14,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Check if models directory exists
+MODELS_DIR = 'models'
+os.makedirs(MODELS_DIR, exist_ok=True)
 
 # Initialize session state
 if 'current_page' not in st.session_state:
@@ -44,10 +50,10 @@ with st.sidebar:
     model_options = ['Random Forest']
     
     # Check which models are available
-    try:
-        joblib.load('models/neural_network_model.pkl')
+    nn_model_path = os.path.join(MODELS_DIR, 'neural_network_model.pkl')
+    if os.path.exists(nn_model_path):
         model_options.append('Neural Network')
-    except:
+    else:
         st.info("Neural Network not trained yet")
     
     selected_model = st.selectbox(
@@ -77,6 +83,36 @@ with st.sidebar:
     if st.button("Project Info", use_container_width=True):
         st.session_state.current_page = 'info'
         st.rerun()
+
+# Helper function to load models with fallback
+def load_model(model_name):
+    """Load model with fallback to demo mode"""
+    try:
+        if model_name == 'Random Forest':
+            model_path = os.path.join(MODELS_DIR, 'random_forest.pkl')
+            scaler_path = os.path.join(MODELS_DIR, 'scaler_retrained.pkl')
+            
+            if os.path.exists(model_path) and os.path.exists(scaler_path):
+                model = joblib.load(model_path)
+                scaler = joblib.load(scaler_path)
+                return model, scaler
+            else:
+                return None, None
+                
+        else:  # Neural Network
+            model_path = os.path.join(MODELS_DIR, 'neural_network_model.pkl')
+            scaler_path = os.path.join(MODELS_DIR, 'nn_scaler.pkl')
+            
+            if os.path.exists(model_path) and os.path.exists(scaler_path):
+                model = joblib.load(model_path)
+                scaler = joblib.load(scaler_path)
+                return model, scaler
+            else:
+                return None, None
+                
+    except Exception as e:
+        st.error(f"Error loading model: {str(e)}")
+        return None, None
 
 # Page routing
 if st.session_state.current_page == 'home':
@@ -121,13 +157,17 @@ if st.session_state.current_page == 'home':
     cols = st.columns(3)
     
     with cols[0]:
-        st.metric("Random Forest", "Available", "Baseline Model")
+        rf_path = os.path.join(MODELS_DIR, 'random_forest.pkl')
+        if os.path.exists(rf_path):
+            st.metric("Random Forest", "Available", "Baseline Model")
+        else:
+            st.metric("Random Forest", "Not Found", "Train model first")
     
     with cols[1]:
-        try:
-            joblib.load('models/neural_network_model.pkl')
+        nn_path = os.path.join(MODELS_DIR, 'neural_network_model.pkl')
+        if os.path.exists(nn_path):
             st.metric("Neural Network", "Available", "3 Hidden Layers")
-        except:
+        else:
             st.metric("Neural Network", "Not Trained", "Train required")
     
     with cols[2]:
@@ -164,33 +204,34 @@ elif st.session_state.current_page == 'prediction':
     if st.button("Predict Diabetes Risk", type="primary", use_container_width=True):
         st.session_state.prediction_made = True
         
-        try:
-            if selected_model == 'Random Forest':
-                # Load RF model
-                model = joblib.load('models/random_forest.pkl')
-                scaler = joblib.load('models/scaler_retrained.pkl')
+        # Try to load real model first
+        model, scaler = load_model(selected_model)
+        
+        if model is not None and scaler is not None:
+            try:
                 features_scaled = scaler.transform(features)
-                proba = model.predict_proba(features_scaled)[0][1]
-                prediction = model.predict(features_scaled)[0]
-            
-            else:  # Neural Network
-                # Load NN model
-                model = joblib.load('models/neural_network_model.pkl')
-                scaler = joblib.load('models/nn_scaler.pkl')
-                features_scaled = scaler.transform(features)
-                proba = model.predict_proba(features_scaled)[0][1]
-                prediction = 1 if proba > 0.5 else 0
-            
-            # Store results
-            st.session_state.current_proba = proba
-            st.session_state.current_prediction = prediction
-            
-        except Exception as e:
-            st.error(f"Prediction error: {str(e)}")
-            st.info("Make sure models are trained. Using demo prediction.")
-            # Demo prediction
-            st.session_state.current_proba = 0.35
-            st.session_state.current_prediction = 0
+                if hasattr(model, 'predict_proba'):
+                    proba = model.predict_proba(features_scaled)[0][1]
+                    prediction = model.predict(features_scaled)[0]
+                else:
+                    # For models without predict_proba
+                    prediction = model.predict(features_scaled)[0]
+                    proba = prediction  # Use prediction as probability estimate
+                
+            except Exception as e:
+                st.error(f"Prediction error: {str(e)}")
+                # Fallback to demo
+                proba = 0.35
+                prediction = 0
+        else:
+            # Demo prediction when model not found
+            st.warning("Using demo prediction (real model not found)")
+            proba = 0.35
+            prediction = 0
+        
+        # Store results
+        st.session_state.current_proba = proba
+        st.session_state.current_prediction = prediction
     
     # Display results if prediction was made
     if st.session_state.prediction_made and 'current_proba' in st.session_state:
