@@ -1,11 +1,6 @@
 [server]
 maxUploadSize = 200
-enableXsrfProtection = false
 enableCORS = false
-
+enableXsrfProtection = false
 [browser]
 gatherUsageStats = false
-
-# Try to disable uv
-[global]
-developmentMode = false
