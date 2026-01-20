@@ -2,10 +2,11 @@
 maxUploadSize = 200
 enableXsrfProtection = false
 enableCORS = false
+maxMessageSize = 200
 
 [browser]
 gatherUsageStats = false
 
-# Try to force Python version
-[global]
-pythonVersion = "3.10"
+# Increase timeouts
+[server]
+maxUploadSize = 500
