@@ -461,6 +461,15 @@ else:
                 return None, None
         return None, None
 
+    # Check if button was clicked
+    if predict_button:
+        st.session_state.current_prediction, st.session_state.current_proba = make_prediction(st.session_state.current_features)
+        st.session_state.prediction_made = True
+    elif st.session_state.prediction_made and st.session_state.current_prediction is not None:
+        # Use cached prediction - do nothing
+        pass
+
+
     # Create current features array
     current_features = np.array([[st.session_state.pregnancies, st.session_state.glucose,
                                   st.session_state.blood_pressure, st.session_state.skin_thickness,
@@ -469,7 +478,7 @@ else:
 
     # Auto-make prediction whenever values change OR when button is clicked
     st.session_state.current_features = current_features
-    st.session_state.current_prediction, st.session_state.current_proba = make_prediction(current_features)
+    # st.session_state.current_prediction, st.session_state.current_proba = make_prediction(current_features)  # AUTO-PREDICTION REMOVED
     st.session_state.prediction_made = True
 
     # Display results - always show the prediction
@@ -639,28 +648,42 @@ else:
         viz_col1, viz_col2 = st.columns(2)
 
         with viz_col1:
-            # Risk gauge
+            # Risk gauge with centered number
             fig_gauge = go.Figure(go.Indicator(
-                mode = "gauge+number",
-                value = risk_percentage,
-                title = {"text": "Risk Gauge"},
-                domain = {"x": [0, 1], "y": [0, 1]},
-                gauge = {
-                    "axis": {"range": [0, 100]},
-                    "bar": {"color": bar_color},
-                    "steps": [
-                        {"range": [0, 30], "color": "#D1FAE5"},
-                        {"range": [30, 70], "color": "#FEF3C7"},
-                        {"range": [70, 100], "color": "#FEE2E2"}
+                mode="gauge+number",
+                value=risk_percentage,
+                title={'text': "Diabetes Risk Gauge", 'font': {'size': 20}},
+                domain={'x': [0, 1], 'y': [0, 1]},
+                number={
+                    'font': {'size': 60, 'color': bar_color, 'family': "Arial"},
+                    'prefix': '',
+                    'suffix': '%'
+                },
+                gauge={
+                    'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "gray"},
+                    'bar': {'color': bar_color, 'thickness': 0.75},
+                    'bgcolor': "white",
+                    'borderwidth': 2,
+                    'bordercolor': "gray",
+                    'steps': [
+                        {'range': [0, 30], 'color': '#D1FAE5'},
+                        {'range': [30, 70], 'color': '#FEF3C7'},
+                        {'range': [70, 100], 'color': '#FEE2E2'}
                     ],
-                    "threshold": {
-                        "line": {"color": "black", "width": 4},
-                        "thickness": 0.75,
-                        "value": risk_percentage
+                    'threshold': {
+                        'line': {'color': "black", 'width': 4},
+                        'thickness': 0.8,
+                        'value': risk_percentage
                     }
                 }
             ))
-            fig_gauge.update_layout(height=300)
+            
+            fig_gauge.update_layout(
+                height=350,
+                margin=dict(t=50, b=10, l=10, r=10),
+                paper_bgcolor='rgba(0,0,0,0)',
+                font={'color': "darkblue", 'family': "Arial"}
+            )
             st.plotly_chart(fig_gauge, use_container_width=True)
 
         with viz_col2:
