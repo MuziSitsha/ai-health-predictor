@@ -14,3 +14,13 @@ venv/
 *.model
 .DS_Store
 *.log
+
+# Temporary and backup files
+*.backup.*
+*_backup_*.py
+*_clean.py
+*_original.py
+fix_*.py
+train_*.py
+*.temp
+__pycache__/
